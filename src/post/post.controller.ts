@@ -1,34 +1,74 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Post,
+	Body,
+	Patch,
+	Param,
+	Delete,
+	Query,
+	UseGuards,
+	Req,
+	ParseIntPipe,
+} from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+import { AuthGuard } from 'src/_common/guards/jwt/auth.guard';
+import { CreateCommentReq, FindCommentsReq } from './dto/comment.dto';
+import { CreatePostReq, FindPostMinRes, FindPostRes } from './dto/post.dto';
 import { PostService } from './post.service';
-import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
 
 @Controller('post')
 export class PostController {
-  constructor(private readonly postService: PostService) {}
+	constructor(private readonly postService: PostService) {}
 
-  @Post()
-  create(@Body() createPostDto: CreatePostDto) {
-    return this.postService.create(createPostDto);
-  }
+	@UseGuards(AuthGuard)
+	@Get()
+	async findPosts() {
+		const posts = await this.postService.findPosts();
+		return plainToInstance(FindPostMinRes, posts);
+	}
 
-  @Get()
-  findAll() {
-    return this.postService.findAll();
-  }
+	@UseGuards(AuthGuard)
+	@Get('category')
+	async findCategories() {
+		return await this.postService.findCategories();
+	}
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.postService.findOne(+id);
-  }
+	@UseGuards(AuthGuard)
+	@Post()
+	async createPost(@Req() req: any, @Body() createPostReq: CreatePostReq) {
+		return await this.postService.createPost(req.user, createPostReq);
+	}
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-    return this.postService.update(+id, updatePostDto);
-  }
+	@UseGuards(AuthGuard)
+	@Get('comment')
+	async findComments(@Query() findCommentsReq: FindCommentsReq) {
+		const comments = await this.postService.findComments(findCommentsReq);
+		// return plainToInstance(FindCommentsReq, comments);
+		return comments;
+	}
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.postService.remove(+id);
-  }
+	@UseGuards(AuthGuard)
+	@Post('comment')
+	async createComment(
+		@Req() req: any,
+		@Body() createCommentReq: CreateCommentReq,
+	) {
+		return await this.postService.createComment(req.user, createCommentReq);
+	}
+
+	@UseGuards(AuthGuard)
+	@Get('tag')
+	async findTags(@Query('keyword') keyword: string) {
+		return await this.postService.findTags(keyword);
+	}
+
+	@UseGuards(AuthGuard)
+	@Get(':id')
+	async findPost(@Param('id', ParseIntPipe) id: number) {
+		return plainToInstance(
+			FindPostRes,
+			await this.postService.findPost(id),
+		);
+	}
 }

@@ -7,7 +7,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
-import { CreateUserReq, FindUserRes, UserDto } from './dto/user.dto';
+import {
+	CreateUserReq,
+	FindUserRes,
+	UpdateUserReq,
+	UserDto,
+} from './dto/user.dto';
 import { User } from './entities/user.entity';
 import { UserRank, UserSocialProvider } from './interfaces/user.interface';
 
@@ -45,7 +50,7 @@ export class UserService {
 			if (!user) {
 				throw new NotFoundException(`해당 유저가 발견되지 않습니다`);
 			}
-			return plainToInstance(FindUserRes, user);
+			return user;
 		} catch (error) {
 			throw error;
 		}
@@ -74,6 +79,21 @@ export class UserService {
 			const user = await this.userRepository.findOneBy({
 				nickname,
 			});
+			if (!user) {
+				throw new NotFoundException(`해당 유저가 발견되지 않습니다`);
+			}
+			return plainToInstance(FindUserRes, user);
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async updateUser(id: number, updateUserReq: UpdateUserReq) {
+		try {
+			const user = await this.userRepository.update(
+				{ id },
+				updateUserReq,
+			);
 			if (!user) {
 				throw new NotFoundException(`해당 유저가 발견되지 않습니다`);
 			}

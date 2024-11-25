@@ -29,16 +29,19 @@ export class AuthService {
 	) {}
 
 	// JWT 발급
-	async issueJwt(nickname: string, rank: UserRank) {
-		const payload: JwtPayload = { nickname: nickname, rank: rank };
+	async issueJwt(id: number, email: string) {
+		const payload: JwtPayload = {
+			id: id,
+			email: email,
+		};
 		const accessToken = this.accessTokenJwtService.sign(payload);
 		const refreshToken = this.refreshTokenJwtService.sign(payload);
 
 		return {
 			accessToken,
 			refreshToken,
-			nickname,
-			rank,
+			id,
+			email,
 		};
 	}
 
@@ -46,7 +49,7 @@ export class AuthService {
 	async reissueJwt(refreshToken: string) {
 		try {
 			const decoded = this.refreshTokenJwtService.decode(refreshToken);
-			return this.issueJwt(decoded.nickname, decoded.rank);
+			return this.issueJwt(decoded.id, decoded.email);
 		} catch (error) {
 			throw new UnauthorizedException(
 				'refresh token이 유효하지 않습니다',
@@ -97,7 +100,7 @@ export class AuthService {
 						socialId,
 						provider,
 					);
-				return await this.issueJwt(user.nickname, user.rank);
+				return await this.issueJwt(user.id, user.email);
 			} catch (error) {
 				// 데이터베이스에 유저 정보 없으면 회원가입 처리
 				if (error instanceof NotFoundException) {
@@ -251,7 +254,7 @@ export class AuthService {
 				}
 			}
 		}
-		return await this.issueJwt(user.nickname, user.rank);
+		return await this.issueJwt(user.id, user.email);
 	}
 
 	// 닉네임 중복 검사

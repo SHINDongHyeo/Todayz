@@ -8,20 +8,22 @@ import {
 	Delete,
 	ParseIntPipe,
 	UseGuards,
+	Req,
 } from '@nestjs/common';
-import { AuthGuard } from 'src/_common/guards/auth.guard';
-import { CreateUserReq } from './dto/user.dto';
+import { plainToInstance } from 'class-transformer';
+import { AuthGuard } from 'src/_common/guards/jwt/auth.guard';
+
+import {
+	CreateUserReq,
+	FindUserMinRes,
+	FindUserRes,
+	UpdateUserReq,
+} from './dto/user.dto';
 import { UserService } from './user.service';
 
 @Controller('user')
 export class UserController {
 	constructor(private readonly userService: UserService) {}
-
-	@UseGuards(AuthGuard)
-	@Get(':id')
-	async findUser(@Param('id', ParseIntPipe) id: number) {
-		return await this.userService.findUser(id);
-	}
 
 	@UseGuards(AuthGuard)
 	@Post()
@@ -33,6 +35,30 @@ export class UserController {
 			email,
 			nickname,
 		);
+	}
+
+	@UseGuards(AuthGuard)
+	@Get(':id')
+	async findUser(
+		@Req() req: any,
+		@Param('id', ParseIntPipe) id: number,
+	): Promise<FindUserRes> {
+		const user = await this.userService.findUser(id);
+		console.log(req.user);
+		if (req.user.id === user.id) {
+			return plainToInstance(FindUserRes, user);
+		} else {
+			return plainToInstance(FindUserMinRes, user);
+		}
+	}
+
+	@UseGuards(AuthGuard)
+	@Patch(':id')
+	async updateUser(
+		@Param('id', ParseIntPipe) id: number,
+		@Body() updateUserReq: UpdateUserReq,
+	): Promise<FindUserRes> {
+		return this.userService.updateUser(id, updateUserReq);
 	}
 
 	@UseGuards(AuthGuard)

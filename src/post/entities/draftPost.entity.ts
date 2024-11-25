@@ -15,30 +15,18 @@ import { Subcategory } from './subcategory.entity';
 import { Tag } from './tag.entity';
 
 @Entity()
-export class Post {
+export class DraftPost {
 	@PrimaryGeneratedColumn({ type: 'int' })
 	id: number;
 
-	@Column({ type: 'varchar', length: 100 })
+	@Column({ type: 'varchar', length: 100, nullable: true })
 	title: string;
 
 	@Column({ type: 'text', nullable: true })
 	content: string;
 
-	@Column({ type: 'text', nullable: true })
-	excerpt: string;
-
 	@CreateDateColumn({ type: 'timestamp' })
 	createdAt: Date;
-
-	@Column({ type: 'int', default: 0 })
-	viewCount: number;
-
-	@Column({ type: 'int', default: 0 })
-	likeCount: number;
-
-	@Column({ type: 'int', default: 0 })
-	commentCount: number;
 
 	@ManyToOne(() => User, (user) => user.posts, { eager: true })
 	user: User;
@@ -52,7 +40,4 @@ export class Post {
 	@ManyToMany(() => Tag, (tag) => tag.posts)
 	@JoinTable()
 	tags: Tag[];
-
-	@OneToMany(() => Comment, (comment) => comment.post)
-	comments: Comment[];
 }

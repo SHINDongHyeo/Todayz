@@ -43,9 +43,9 @@ export class SignInRes {
 	@IsString()
 	refreshToken: string;
 
-	@IsString()
-	nickname: string;
+	@IsInt()
+	id: number;
 
-	@IsEnum(UserRank)
-	rank: UserRank;
+	@IsString()
+	email: string;
 }

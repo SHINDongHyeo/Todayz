@@ -1,7 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Post } from 'src/post/entities/post.entity';
+import { Comment } from 'src/post/entities/comment.entity';
 import { User } from 'src/user/entities/user.entity';
+import { Category } from 'src/post/entities/category.entity';
+import { Subcategory } from 'src/post/entities/subcategory.entity';
+import { Tag } from 'src/post/entities/tag.entity';
+import { DraftPost } from 'src/post/entities/draftPost.entity';
 
 @Module({
 	imports: [
@@ -16,7 +22,15 @@ import { User } from 'src/user/entities/user.entity';
 				password: configService.get<string>('DB_PASSWORD'),
 				database: configService.get<string>('DB_DATABASE'),
 				logging: true,
-				entities: [User],
+				entities: [
+					User,
+					Post,
+					Comment,
+					Category,
+					Subcategory,
+					Tag,
+					DraftPost,
+				],
 				synchronize:
 					configService.get<string>('NODE_ENV') === 'development',
 			}),

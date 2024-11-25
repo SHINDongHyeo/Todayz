@@ -1,7 +1,11 @@
+import { Comment } from 'src/post/entities/comment.entity';
+import { DraftPost } from 'src/post/entities/draftPost.entity';
+import { Post } from 'src/post/entities/post.entity';
 import {
 	Column,
 	CreateDateColumn,
 	Entity,
+	OneToMany,
 	PrimaryColumn,
 	PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -37,6 +41,36 @@ export class User {
 	@Column({ type: 'smallint', default: 0 })
 	rankPoint: number;
 
+	@Column({ type: 'varchar', length: 200, nullable: true })
+	profileImageUrl: string;
+
+	@Column({ type: 'tinytext', nullable: true })
+	introduction: string;
+
+	@Column({ type: 'smallint', default: 0 })
+	subscriberCount: number;
+
+	@Column({ type: 'smallint', default: 0 })
+	subscribeCount: number;
+
+	@Column({ type: 'smallint', default: 0 })
+	postCount: number;
+
+	@Column({ type: 'smallint', default: 0 })
+	commentCount: number;
+
+	@Column({ type: 'smallint', default: 0 })
+	debateCount: number;
+
 	@CreateDateColumn({ type: 'timestamp' })
 	createdAt: Date;
+
+	@OneToMany(() => Post, (post) => post.user)
+	posts: Post[];
+
+	@OneToMany(() => DraftPost, (drafPost) => drafPost.user)
+	draftPosts: DraftPost[];
+
+	@OneToMany(() => Comment, (comment) => comment.user)
+	comments: Comment[];
 }

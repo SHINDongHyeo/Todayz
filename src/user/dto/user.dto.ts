@@ -1,5 +1,12 @@
 import { Exclude } from 'class-transformer';
-import { IsDate, IsEmail, IsEnum, IsInt, IsString } from 'class-validator';
+import {
+	IsDate,
+	IsEmail,
+	IsEnum,
+	IsInt,
+	IsOptional,
+	IsString,
+} from 'class-validator';
 import {
 	UserRank,
 	UserRole,
@@ -30,6 +37,9 @@ export class UserDto {
 
 	@IsInt()
 	rankPoint: number;
+
+	@IsString()
+	profileImageUrl: string;
 
 	@IsDate()
 	createdAt: Date;
@@ -74,6 +84,87 @@ export class FindUserRes {
 	@IsInt()
 	rankPoint: number;
 
+	@IsString()
+	profileImageUrl: string;
+
+	@IsString()
+	introduction: string;
+
+	@IsInt()
+	subscriberCount: number;
+
+	@IsInt()
+	subscribeCount: number;
+
+	@IsInt()
+	postCount: number;
+
+	@IsInt()
+	commentCount: number;
+
+	@IsInt()
+	debateCount: number;
+
 	@IsDate()
 	createdAt: Date;
+}
+
+export class FindUserMinRes {
+	@IsInt()
+	id: number;
+
+	@Exclude()
+	socialId: string;
+
+	@Exclude()
+	socialProvider: string;
+
+	@Exclude()
+	email: string;
+
+	@IsString()
+	nickname: string;
+
+	@IsEnum(UserRole)
+	role: UserRole;
+
+	@IsEnum(UserRank)
+	rank: UserRank;
+
+	@Exclude()
+	rankPoint: number;
+
+	@IsString()
+	profileImageUrl: string;
+
+	@IsString()
+	introduction: string;
+
+	@IsInt()
+	subscriberCount: number;
+
+	@Exclude()
+	subscribeCount: number;
+
+	@Exclude()
+	postCount: number;
+
+	@Exclude()
+	commentCount: number;
+
+	@Exclude()
+	debateCount: number;
+
+	@Exclude()
+	createdAt: Date;
+}
+
+export class UpdateUserReq {
+	@IsString()
+	@IsOptional()
+	nickname: string;
+
+	@IsString()
+	@IsOptional()
+	introduction: string;
 }

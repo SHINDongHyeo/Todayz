@@ -6,6 +6,11 @@ import { ReissueJwtReq, SignInReq, SignInRes, SignUpReq } from './dto/auth.dto';
 export class AuthController {
 	constructor(private readonly authService: AuthService) {}
 
+	@Post('jwt/reissue')
+	async reissueJwt(@Body('refreshToken') refreshToken: string) {
+		return this.authService.reissueJwt(refreshToken);
+	}
+
 	@Post('sign-in')
 	async signIn(@Body() signInReq: SignInReq): Promise<SignInRes> {
 		const { token, provider } = signInReq;
