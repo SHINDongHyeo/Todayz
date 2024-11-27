@@ -17,6 +17,19 @@
 		{
 			"type": "node",
 			"request": "launch",
+			"name": "dev 워치",
+			"skipFiles": ["<node_internals>/**"],
+			"runtimeExecutable": "yarn",
+			"runtimeArgs": ["start:dev"],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
+			"console": "integratedTerminal"
+		},
+		{
+			"type": "node",
+			"request": "launch",
 			"name": "dev 테스트",
 			"skipFiles": ["<node_internals>/**"],
 			"runtimeExecutable": "yarn",

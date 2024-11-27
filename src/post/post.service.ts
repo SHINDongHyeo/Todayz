@@ -3,11 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { JwtPayload } from 'src/auth/interfaces/auth.interface';
 import { UserService } from 'src/user/user.service';
-import { Like, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateCommentReq, FindCommentsReq } from './dto/comment.dto';
 import { CreatePostReq, FindPostRes } from './dto/post.dto';
 import { Category } from './entities/category.entity';
 import { Comment } from './entities/comment.entity';
+import { LikeComment } from './entities/likeComment.entity';
 import { Post } from './entities/post.entity';
 import { Subcategory } from './entities/subcategory.entity';
 import { Tag } from './entities/tag.entity';
@@ -25,6 +26,8 @@ export class PostService {
 		private readonly subcategoryRepository: Repository<Subcategory>,
 		@InjectRepository(Tag)
 		private readonly tagRepository: Repository<Tag>,
+		@InjectRepository(LikeComment)
+		private readonly likeRepository: Repository<LikeComment>,
 		private readonly userService: UserService,
 	) {}
 
@@ -146,13 +149,70 @@ export class PostService {
 		return '';
 	}
 
-	async findComments(findCommentsReq: FindCommentsReq) {
+	async findComments(reqUser: JwtPayload, findCommentsReq: FindCommentsReq) {
 		try {
 			const { postId } = findCommentsReq;
-			const comments = await this.commentRepository.findBy({
-				post: { id: postId },
+			const comments = await this.commentRepository.find({
+				where: { post: { id: postId } },
+				relations: [
+					'user',
+					'mentionUser',
+					'likeComments',
+					'likeComments.user',
+				],
+				order: {
+					createdAt: 'ASC',
+				},
 			});
-			return comments;
+
+			console.log(reqUser);
+			return comments.map((comment) => ({
+				...comment,
+				likedByCurrentUser: comment.likeComments.some(
+					(likeComment) => likeComment?.user?.id === reqUser.id,
+				),
+			}));
+		} catch (error) {
+			console.log(error);
+			throw error;
+		}
+	}
+
+	async createlikeComment(reqUser: JwtPayload, commentId: number) {
+		try {
+			const user = await this.userService.findUser(reqUser.id);
+			const comments = await this.commentRepository.findBy({
+				id: commentId,
+			});
+			const comment = comments[0];
+			const like = this.likeRepository.create({
+				user,
+				comment,
+			});
+
+			comment.likedCount += 1;
+			await this.commentRepository.save(comment);
+			return await this.likeRepository.save(like);
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async removelikeComment(reqUser: JwtPayload, commentId: number) {
+		try {
+			const comments = await this.commentRepository.findBy({
+				id: commentId,
+			});
+			const comment = comments[0];
+			const likes = await this.likeRepository.findBy({
+				user: { id: reqUser.id },
+				comment: { id: commentId },
+			});
+			const like = likes[0];
+
+			comment.likedCount -= 1;
+			await this.commentRepository.save(comment);
+			return await this.likeRepository.remove(like);
 		} catch (error) {
 			throw error;
 		}

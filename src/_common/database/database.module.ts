@@ -8,6 +8,7 @@ import { Category } from 'src/post/entities/category.entity';
 import { Subcategory } from 'src/post/entities/subcategory.entity';
 import { Tag } from 'src/post/entities/tag.entity';
 import { DraftPost } from 'src/post/entities/draftPost.entity';
+import { LikeComment } from 'src/post/entities/likeComment.entity';
 
 @Module({
 	imports: [
@@ -30,6 +31,7 @@ import { DraftPost } from 'src/post/entities/draftPost.entity';
 					Subcategory,
 					Tag,
 					DraftPost,
+					LikeComment,
 				],
 				synchronize:
 					configService.get<string>('NODE_ENV') === 'development',

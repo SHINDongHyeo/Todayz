@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Exclude, Transform, Type } from 'class-transformer';
 import {
 	IsDate,
 	IsInt,
@@ -6,6 +6,8 @@ import {
 	IsOptional,
 	IsString,
 } from 'class-validator';
+import { FindUserMinRes } from 'src/user/dto/user.dto';
+import { Post } from '../entities/post.entity';
 
 export class CreateCommentReq {
 	@IsInt()
@@ -30,8 +32,16 @@ export class FindCommentsReq {
 
 export class FindCommentsRes {
 	@IsInt()
+	@IsNotEmpty()
+	id: number;
+
+	@IsInt()
 	@IsOptional()
 	parentId: number;
+
+	@IsInt()
+	@IsNotEmpty()
+	likedCount: number;
 
 	@IsString()
 	@IsNotEmpty()
@@ -40,4 +50,15 @@ export class FindCommentsRes {
 	@IsDate()
 	@IsNotEmpty()
 	createdAt: Date;
+
+	@Exclude()
+	post: Post;
+
+	@Type(() => FindUserMinRes)
+	@IsNotEmpty()
+	user: FindUserMinRes;
+
+	@Type(() => FindUserMinRes)
+	@IsOptional()
+	mentionUser: FindUserMinRes;
 }
