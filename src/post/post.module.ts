@@ -11,6 +11,10 @@ import { DraftPost } from './entities/draftPost.entity';
 import { UserModule } from 'src/user/user.module';
 import { AccessTokenJwtModule } from 'src/_common/jwt/access_token_jwt.module';
 import { LikeComment } from './entities/likeComment.entity';
+import { LikePost } from './entities/likePost.entity';
+import { PopularPost } from './entities/popularPost.entity';
+import { SavedPost } from './entities/savedPost.entity';
+import { Inquiry } from '../inquiry/entities/inquiry.entity';
 
 @Module({
 	imports: [
@@ -22,6 +26,10 @@ import { LikeComment } from './entities/likeComment.entity';
 			Tag,
 			DraftPost,
 			LikeComment,
+			LikePost,
+			PopularPost,
+			SavedPost,
+			Inquiry,
 		]),
 		AccessTokenJwtModule,
 		UserModule,

@@ -130,3 +130,42 @@ export class FindPostMinRes {
 	@Type(() => FindUserMinRes)
 	user: FindUserMinRes;
 }
+
+export class FindPopularPostMinRes {
+	@IsInt()
+	@IsNotEmpty()
+	id: number;
+
+	@Type(() => FindPostMinRes)
+	post: FindPostMinRes;
+}
+
+export class FindPostIdOnlyRes {
+	@IsInt()
+	@IsNotEmpty()
+	id: number;
+
+	@Exclude()
+	title: string;
+
+	@Exclude()
+	content: string;
+
+	@Exclude()
+	excerpt: string;
+
+	@Exclude()
+	createdAt: string;
+
+	@Exclude()
+	viewCount: number;
+
+	@Exclude()
+	likeCount: number;
+
+	@Exclude()
+	commentCount: number;
+
+	@Exclude()
+	user: FindUserMinRes;
+}

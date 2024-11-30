@@ -1,7 +1,10 @@
 import { Comment } from 'src/post/entities/comment.entity';
 import { DraftPost } from 'src/post/entities/draftPost.entity';
+import { Inquiry } from 'src/inquiry/entities/inquiry.entity';
 import { LikeComment } from 'src/post/entities/likeComment.entity';
+import { LikePost } from 'src/post/entities/likePost.entity';
 import { Post } from 'src/post/entities/post.entity';
+import { SavedPost } from 'src/post/entities/savedPost.entity';
 import {
 	Column,
 	CreateDateColumn,
@@ -80,4 +83,13 @@ export class User {
 
 	@OneToMany(() => LikeComment, (likeComment) => likeComment.user)
 	likeComments: LikeComment[];
+
+	@OneToMany(() => LikePost, (likePost) => likePost.user)
+	likePosts: LikePost[];
+
+	@OneToMany(() => SavedPost, (savedPost) => savedPost.user)
+	savedPosts: SavedPost[];
+
+	@OneToMany(() => Inquiry, (inquiry) => inquiry.user)
+	inquiries: Inquiry[];
 }

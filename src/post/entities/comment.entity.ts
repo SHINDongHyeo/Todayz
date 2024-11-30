@@ -2,6 +2,7 @@ import { User } from 'src/user/entities/user.entity';
 import {
 	Column,
 	CreateDateColumn,
+	DeleteDateColumn,
 	Entity,
 	ManyToOne,
 	OneToMany,
@@ -26,6 +27,9 @@ export class Comment {
 
 	@CreateDateColumn({ type: 'timestamp' })
 	createdAt: Date;
+
+	@DeleteDateColumn({ type: 'timestamp', nullable: true })
+	deletedAt: Date;
 
 	@ManyToOne(() => Post, (post) => post.comments, {
 		onDelete: 'CASCADE',

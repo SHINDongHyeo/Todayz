@@ -10,7 +10,7 @@ import { Post } from './post.entity';
 import { Subcategory } from './subcategory.entity';
 
 @Entity()
-@Index('name_fulltext', ['name'], { fulltext: true })
+@Index('tag_fulltext', ['name'], { fulltext: true })
 export class Tag {
 	@PrimaryGeneratedColumn({ type: 'int' })
 	id: number;

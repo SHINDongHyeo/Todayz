@@ -15,10 +15,11 @@ import { plainToInstance } from 'class-transformer';
 import { AuthGuard } from 'src/_common/guards/jwt/auth.guard';
 import {
 	CreateCommentReq,
-	FindCommentsReq,
 	FindCommentsRes,
+	FindMyCommentsRes,
 } from './dto/comment.dto';
 import { CreatePostReq, FindPostMinRes, FindPostRes } from './dto/post.dto';
+import { PostType } from './interfaces/post.interface';
 import { PostService } from './post.service';
 
 @Controller('post')
@@ -28,15 +29,38 @@ export class PostController {
 	// 게시물
 	@UseGuards(AuthGuard)
 	@Get()
-	async findPosts() {
-		const posts = await this.postService.findPosts();
-		return plainToInstance(FindPostMinRes, posts);
+	async findPosts(
+		@Query('offset', ParseIntPipe) offset: number,
+		@Query('type') type: PostType,
+	) {
+		if (type === PostType.LATEST) {
+			return await this.postService.findPostsLatest(offset);
+		} else if (type === PostType.POPULAR) {
+			return await this.postService.findPostsPopular(offset);
+		} else {
+			return;
+		}
+	}
+
+	@UseGuards(AuthGuard)
+	@Get('search')
+	async searchPosts(
+		@Query('offset', ParseIntPipe) offset: number,
+		@Query('searchWord') searchWord: string,
+	) {
+		return await this.postService.searchPosts(offset, searchWord);
 	}
 
 	@UseGuards(AuthGuard)
 	@Post()
 	async createPost(@Req() req: any, @Body() createPostReq: CreatePostReq) {
 		return await this.postService.createPost(req.user, createPostReq);
+	}
+
+	@UseGuards(AuthGuard)
+	@Get('saved')
+	async getSavedPost(@Req() req: any) {
+		return await this.postService.getSavedPost(req.user);
 	}
 
 	// 카테고리
@@ -47,28 +71,6 @@ export class PostController {
 	}
 
 	// 댓글
-	@UseGuards(AuthGuard)
-	@Get('comment')
-	async findComments(
-		@Req() req: any,
-		@Query() findCommentsReq: FindCommentsReq,
-	) {
-		const comments = await this.postService.findComments(
-			req.user,
-			findCommentsReq,
-		);
-		return plainToInstance(FindCommentsRes, comments);
-	}
-
-	@UseGuards(AuthGuard)
-	@Post('comment')
-	async createComment(
-		@Req() req: any,
-		@Body() createCommentReq: CreateCommentReq,
-	) {
-		await this.postService.createComment(req.user, createCommentReq);
-		return;
-	}
 
 	// 태그
 	@UseGuards(AuthGuard)
@@ -78,34 +80,120 @@ export class PostController {
 	}
 
 	///////////////////////////// 동적 라우팅 ////////////////////////////////////
-	// 게시물
 	@UseGuards(AuthGuard)
-	@Get(':id')
-	async findPost(@Param('id', ParseIntPipe) id: number) {
-		return plainToInstance(
-			FindPostRes,
-			await this.postService.findPost(id),
-		);
+	@Get('comment/user/:id')
+	async getCommentOfUser(
+		@Req() req: any,
+		@Param('id', ParseIntPipe) id: number,
+	) {
+		const comments = await this.postService.getCommentOfUser(req.user, id);
+		return plainToInstance(FindMyCommentsRes, comments);
 	}
 
-	// 댓글
 	@UseGuards(AuthGuard)
 	@Post('comment/:id/like')
-	async createlikeComment(
+	async createLikeComment(
 		@Req() req: any,
-		@Param('id', ParseIntPipe) commentId: number,
+		@Param('id', ParseIntPipe) id: number,
 	) {
-		await this.postService.createlikeComment(req.user, commentId);
+		await this.postService.createLikeComment(req.user, id);
 		return;
 	}
 
 	@UseGuards(AuthGuard)
 	@Delete('comment/:id/like')
-	async removelikeComment(
+	async removeLikeComment(
 		@Req() req: any,
-		@Param('id', ParseIntPipe) commentId: number,
+		@Param('id', ParseIntPipe) id: number,
 	) {
-		await this.postService.removelikeComment(req.user, commentId);
+		await this.postService.removeLikeComment(req.user, id);
 		return;
+	}
+
+	@UseGuards(AuthGuard)
+	@Delete('comment/:id')
+	async removeComment(
+		@Req() req: any,
+		@Param('id', ParseIntPipe) id: number,
+	) {
+		return await this.postService.removeComment(req.user, id);
+	}
+
+	@UseGuards(AuthGuard)
+	@Get(':id/comment')
+	async findComments(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
+		const comments = await this.postService.findComments(req.user, id);
+		return plainToInstance(FindCommentsRes, comments);
+	}
+
+	@UseGuards(AuthGuard)
+	@Post(':id/comment')
+	async createComment(
+		@Req() req: any,
+		@Param('id', ParseIntPipe) id: number,
+		@Body() createCommentReq: CreateCommentReq,
+	) {
+		const comment = await this.postService.createComment(
+			req.user,
+			id,
+			createCommentReq,
+		);
+		return plainToInstance(FindCommentsRes, comment);
+	}
+
+	@UseGuards(AuthGuard)
+	@Patch(':id/view')
+	async upPostViewCount(
+		@Req() req: any,
+		@Param('id', ParseIntPipe) id: number,
+	) {
+		await this.postService.upPostViewCount(req.user, id);
+		return;
+	}
+
+	@UseGuards(AuthGuard)
+	@Post(':id/like')
+	async createLikePost(
+		@Req() req: any,
+		@Param('id', ParseIntPipe) id: number,
+	) {
+		await this.postService.createLikePost(req.user, id);
+		return;
+	}
+
+	@UseGuards(AuthGuard)
+	@Delete(':id/like')
+	async removeLikePost(
+		@Req() req: any,
+		@Param('id', ParseIntPipe) id: number,
+	) {
+		await this.postService.removeLikePost(req.user, id);
+		return;
+	}
+
+	@UseGuards(AuthGuard)
+	@Post(':id/save')
+	async savePost(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
+		await this.postService.savePost(req.user, id);
+		return;
+	}
+
+	@UseGuards(AuthGuard)
+	@Delete(':id/save')
+	async cancelSavePost(
+		@Req() req: any,
+		@Param('id', ParseIntPipe) id: number,
+	) {
+		await this.postService.cancelSavePost(req.user, id);
+		return;
+	}
+
+	@UseGuards(AuthGuard)
+	@Get(':id')
+	async findPost(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
+		return plainToInstance(
+			FindPostRes,
+			await this.postService.findPost(req.user, id),
+		);
 	}
 }

@@ -9,6 +9,10 @@ import { Subcategory } from 'src/post/entities/subcategory.entity';
 import { Tag } from 'src/post/entities/tag.entity';
 import { DraftPost } from 'src/post/entities/draftPost.entity';
 import { LikeComment } from 'src/post/entities/likeComment.entity';
+import { LikePost } from 'src/post/entities/likePost.entity';
+import { PopularPost } from 'src/post/entities/popularPost.entity';
+import { SavedPost } from 'src/post/entities/savedPost.entity';
+import { Inquiry } from 'src/inquiry/entities/inquiry.entity';
 
 @Module({
 	imports: [
@@ -32,6 +36,10 @@ import { LikeComment } from 'src/post/entities/likeComment.entity';
 					Tag,
 					DraftPost,
 					LikeComment,
+					LikePost,
+					PopularPost,
+					SavedPost,
+					Inquiry,
 				],
 				synchronize:
 					configService.get<string>('NODE_ENV') === 'development',

@@ -103,6 +103,23 @@ export class UserService {
 		}
 	}
 
+	async updateCommentCount(id: number, isCreating: boolean) {
+		try {
+			if (isCreating) {
+				await this.userRepository.update(id, {
+					commentCount: () => 'commentCount + 1',
+				});
+			} else {
+				await this.userRepository.update(id, {
+					commentCount: () => 'commentCount - 1',
+				});
+			}
+			return;
+		} catch (error) {
+			throw error;
+		}
+	}
+
 	async deleteUser(id: number) {
 		try {
 			const user = await this.userRepository.findOne({ where: { id } });

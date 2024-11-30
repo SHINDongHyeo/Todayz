@@ -1,15 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { JwtPayload } from 'src/auth/interfaces/auth.interface';
 import { UserService } from 'src/user/user.service';
-import { Repository } from 'typeorm';
-import { CreateCommentReq, FindCommentsReq } from './dto/comment.dto';
-import { CreatePostReq, FindPostRes } from './dto/post.dto';
+import { LessThan, Repository } from 'typeorm';
+import { CreateCommentReq } from './dto/comment.dto';
+import {
+	CreatePostReq,
+	FindPopularPostMinRes,
+	FindPostMinRes,
+	FindPostRes,
+} from './dto/post.dto';
 import { Category } from './entities/category.entity';
 import { Comment } from './entities/comment.entity';
 import { LikeComment } from './entities/likeComment.entity';
+import { LikePost } from './entities/likePost.entity';
+import { PopularPost } from './entities/popularPost.entity';
 import { Post } from './entities/post.entity';
+import { SavedPost } from './entities/savedPost.entity';
 import { Subcategory } from './entities/subcategory.entity';
 import { Tag } from './entities/tag.entity';
 
@@ -18,6 +26,10 @@ export class PostService {
 	constructor(
 		@InjectRepository(Post)
 		private readonly postRepository: Repository<Post>,
+		@InjectRepository(PopularPost)
+		private readonly popularPostRepository: Repository<PopularPost>,
+		@InjectRepository(SavedPost)
+		private readonly savedPostRepository: Repository<SavedPost>,
 		@InjectRepository(Comment)
 		private readonly commentRepository: Repository<Comment>,
 		@InjectRepository(Category)
@@ -27,7 +39,9 @@ export class PostService {
 		@InjectRepository(Tag)
 		private readonly tagRepository: Repository<Tag>,
 		@InjectRepository(LikeComment)
-		private readonly likeRepository: Repository<LikeComment>,
+		private readonly likeCommentRepository: Repository<LikeComment>,
+		@InjectRepository(LikePost)
+		private readonly likePostRepository: Repository<LikePost>,
 		private readonly userService: UserService,
 	) {}
 
@@ -95,63 +109,187 @@ export class PostService {
 		}
 	}
 
-	async findPosts() {
-		// TODO: 무한 스크롤 + 커서 기반 페이징으로 수정
-		const posts = await this.postRepository.find();
-		return posts;
+	async findPostsLatest(offset: number = 0) {
+		try {
+			const posts = await this.postRepository.find({
+				order: {
+					createdAt: 'DESC',
+				},
+				take: 10,
+				skip: offset,
+			});
+			if (posts.length === 0) {
+				return;
+			}
+			const firstPostId = posts[0].id;
+			const oneNextPageFirstPostId = firstPostId - 10;
+			const twoNextPageFirstPostId = oneNextPageFirstPostId - 10;
+			const threeNextPageFirstPostId = twoNextPageFirstPostId - 10;
+			const fourtNextPageFirstPostId = threeNextPageFirstPostId - 10;
+			const fiveNextPageFirstPostId = fourtNextPageFirstPostId - 10;
+
+			const oneNextPageFirstPosts = await this.postRepository.findBy({
+				id: oneNextPageFirstPostId,
+			});
+			const isOneNextPageExists = oneNextPageFirstPosts.length > 0;
+			const twoNextPageFirstPosts = await this.postRepository.findBy({
+				id: twoNextPageFirstPostId,
+			});
+			const isTwoNextPageExists = twoNextPageFirstPosts.length > 0;
+			const threeNextPageFirstPosts = await this.postRepository.findBy({
+				id: threeNextPageFirstPostId,
+			});
+			const isThreeNextPageExists = threeNextPageFirstPosts.length > 0;
+			const fourtNextPageFirstPosts = await this.postRepository.findBy({
+				id: fourtNextPageFirstPostId,
+			});
+			const isFourNextPageExists = fourtNextPageFirstPosts.length > 0;
+			const fiveNextPageFirstPosts = await this.postRepository.findBy({
+				id: fiveNextPageFirstPostId,
+			});
+			const isFiveNextPageExists = fiveNextPageFirstPosts.length > 0;
+
+			const postsResult = plainToInstance(FindPostMinRes, posts);
+			let result = {
+				post: postsResult,
+				['isOneNextPageExists']: isOneNextPageExists,
+				['isTwoNextPageExists']: isTwoNextPageExists,
+				['isThreeNextPageExists']: isThreeNextPageExists,
+				['isFourNextPageExists']: isFourNextPageExists,
+				['isFiveNextPageExists']: isFiveNextPageExists,
+			};
+			return result;
+		} catch (error) {
+			throw error;
+		}
 	}
 
-	async findPost(id: number) {
-		const posts = await this.postRepository.findBy({ id });
-		const post = posts[0];
-		return post;
+	async findPostsPopular(offset: number = 0) {
+		try {
+			const posts = await this.popularPostRepository.find({
+				order: {
+					id: 'ASC',
+				},
+				relations: ['post'],
+				take: 10,
+				skip: offset,
+			});
+
+			return plainToInstance(FindPopularPostMinRes, posts);
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async findPost(reqUser: JwtPayload, id: number) {
+		try {
+			const posts = await this.postRepository.find({
+				where: { id: id },
+				withDeleted: true,
+			});
+			const post = posts[0];
+
+			let newPost = {};
+
+			const likePosts = await this.likePostRepository.find({
+				where: {
+					post: { id: id },
+					user: { id: reqUser.id },
+				},
+			});
+			let isUserLikeThis = false;
+			if (likePosts.length !== 0) {
+				isUserLikeThis = true;
+			} else {
+				isUserLikeThis = false;
+			}
+
+			const savedPosts = await this.savedPostRepository.find({
+				where: {
+					post: { id: id },
+					user: { id: reqUser.id },
+				},
+			});
+			let isUserSaveThis = false;
+			if (savedPosts.length !== 0) {
+				isUserSaveThis = true;
+			} else {
+				isUserSaveThis = false;
+			}
+
+			newPost = { ...post, isUserLikeThis, isUserSaveThis };
+			return newPost;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	// 카테고리
 	async findCategories() {
-		const categories = await this.categoryRepository.find();
-		return categories;
+		try {
+			const categories = await this.categoryRepository.find();
+			return categories;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	// 태그
 	async findTags(keyword: string) {
 		// TODO: 속도가 느리다면 redis 이용하는 방식으로 수정
-		const tags = await this.tagRepository
-			.createQueryBuilder('tag')
-			.where('MATCH(tag.name) AGAINST(:keyword IN BOOLEAN MODE)', {
-				keyword: `${keyword}*`,
-			})
-			.take(5)
-			.getMany();
-		return tags;
+		try {
+			const tags = await this.tagRepository
+				.createQueryBuilder('tag')
+				.where('MATCH(tag.name) AGAINST(:keyword IN BOOLEAN MODE)', {
+					keyword: `${keyword}*`,
+				})
+				.take(5)
+				.getMany();
+			return tags;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	async createComment(
 		reqUser: JwtPayload,
+		postId: number,
 		createCommentReq: CreateCommentReq,
 	) {
 		try {
-			const { parentId, content, postId } = createCommentReq;
+			const { parentId, mentionUserId, content } = createCommentReq;
 
 			const posts = await this.postRepository.findBy({ id: postId });
 			const post = posts[0];
 			const user = await this.userService.findUser(reqUser.id);
+			let mentionUser = null;
+			if (mentionUserId) {
+				mentionUser = await this.userService.findUser(mentionUserId);
+			}
 			const comment = this.commentRepository.create({
 				parentId,
+				mentionUser,
 				content,
 				post,
 				user,
 			});
+
+			await this.postRepository.update(
+				{ id: postId },
+				{
+					commentCount: () => 'commentCount + 1',
+				},
+			);
+
+			await this.userService.updateCommentCount(reqUser.id, true);
 			return await this.commentRepository.save(comment);
 		} catch (error) {
 			throw error;
 		}
-		return '';
 	}
 
-	async findComments(reqUser: JwtPayload, findCommentsReq: FindCommentsReq) {
+	async findComments(reqUser: JwtPayload, postId: number) {
 		try {
-			const { postId } = findCommentsReq;
 			const comments = await this.commentRepository.find({
 				where: { post: { id: postId } },
 				relations: [
@@ -163,56 +301,228 @@ export class PostService {
 				order: {
 					createdAt: 'ASC',
 				},
+				withDeleted: true,
 			});
 
-			console.log(reqUser);
-			return comments.map((comment) => ({
-				...comment,
-				likedByCurrentUser: comment.likeComments.some(
+			return comments.map((comment) => {
+				if (comment.deletedAt) {
+					const { content, ...rest } = comment;
+					const likedByCurrentUser = comment.likeComments.some(
+						(likeComment) => likeComment?.user?.id === reqUser.id,
+					);
+
+					return {
+						...rest,
+						likedByCurrentUser,
+					};
+				}
+
+				const likedByCurrentUser = comment.likeComments.some(
 					(likeComment) => likeComment?.user?.id === reqUser.id,
-				),
-			}));
+				);
+
+				return {
+					...comment,
+					likedByCurrentUser,
+				};
+			});
 		} catch (error) {
-			console.log(error);
 			throw error;
 		}
 	}
 
-	async createlikeComment(reqUser: JwtPayload, commentId: number) {
+	async createLikeComment(reqUser: JwtPayload, commentId: number) {
 		try {
-			const user = await this.userService.findUser(reqUser.id);
 			const comments = await this.commentRepository.findBy({
 				id: commentId,
 			});
 			const comment = comments[0];
-			const like = this.likeRepository.create({
+			comment.likedCount += 1;
+			await this.commentRepository.save(comment);
+
+			const user = await this.userService.findUser(reqUser.id);
+			const like = this.likeCommentRepository.create({
 				user,
 				comment,
 			});
-
-			comment.likedCount += 1;
-			await this.commentRepository.save(comment);
-			return await this.likeRepository.save(like);
+			await this.likeCommentRepository.save(like);
+			return;
 		} catch (error) {
 			throw error;
 		}
 	}
 
-	async removelikeComment(reqUser: JwtPayload, commentId: number) {
+	async removeLikeComment(reqUser: JwtPayload, commentId: number) {
 		try {
 			const comments = await this.commentRepository.findBy({
 				id: commentId,
 			});
 			const comment = comments[0];
-			const likes = await this.likeRepository.findBy({
-				user: { id: reqUser.id },
-				comment: { id: commentId },
-			});
-			const like = likes[0];
-
 			comment.likedCount -= 1;
 			await this.commentRepository.save(comment);
-			return await this.likeRepository.remove(like);
+
+			const likes = await this.likeCommentRepository.findBy({
+				user: { id: reqUser.id },
+				comment: { id: commentId }, // TODO: 자기참조관계로 변경 시 수정
+			});
+			const like = likes[0];
+			await this.likeCommentRepository.remove(like);
+			return;
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async removeComment(reqUser: JwtPayload, commentId: number) {
+		try {
+			const comments = await this.commentRepository.find({
+				where: { id: commentId },
+				relations: ['user'],
+			});
+			const comment = comments[0];
+
+			if (comment.user.id === reqUser.id) {
+				await this.commentRepository.softRemove(comment);
+			}
+
+			return;
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async createLikePost(reqUser: JwtPayload, postId: number) {
+		try {
+			const posts = await this.postRepository.findBy({
+				id: postId,
+			});
+			const post = posts[0];
+			post.likeCount += 1;
+			await this.postRepository.save(post);
+
+			const user = await this.userService.findUser(reqUser.id);
+			const like = this.likePostRepository.create({
+				user,
+				post,
+			});
+			await this.likePostRepository.save(like);
+			return;
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async removeLikePost(reqUser: JwtPayload, postId: number) {
+		try {
+			const posts = await this.postRepository.findBy({
+				id: postId,
+			});
+			const post = posts[0];
+			post.likeCount -= 1;
+			await this.postRepository.save(post);
+
+			const likes = await this.likePostRepository.findBy({
+				user: { id: reqUser.id },
+				post: { id: postId }, // TODO: 자기참조관계로 변경 시 수정
+			});
+			const like = likes[0];
+			return await this.likePostRepository.remove(like);
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async upPostViewCount(reqUser: JwtPayload, postId: number) {
+		try {
+			await this.postRepository.update(
+				{ id: postId },
+				{
+					viewCount: () => 'viewCount + 1',
+				},
+			);
+			return;
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async getCommentOfUser(reqUser: JwtPayload, userId: number) {
+		try {
+			if (reqUser.id !== userId) {
+				throw new UnauthorizedException('권한이 없습니다');
+			}
+			// TODO: 삭제했던 내용도 볼 수 있음. 이를 유지할지 결정
+			return await this.commentRepository.find({
+				where: { user: { id: userId } },
+				relations: ['post'],
+				order: {
+					createdAt: 'DESC',
+				},
+				withDeleted: true,
+			});
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async searchPosts(offset: number = 0, searchWord: string) {
+		const posts = this.postRepository
+			.createQueryBuilder('post')
+			.leftJoinAndSelect('post.user', 'user')
+			.where(
+				'MATCH(post.title, post.excerpt, post.content) AGAINST(:searchWord IN BOOLEAN MODE)',
+				{
+					searchWord: `${searchWord}*`,
+				},
+			)
+			.take(10)
+			.skip(offset)
+			.getMany();
+
+		return plainToInstance(FindPostMinRes, posts);
+	}
+
+	async savePost(reqUser: JwtPayload, postId: number) {
+		try {
+			const posts = await this.postRepository.findBy({
+				id: postId,
+			});
+			const post = posts[0];
+
+			const user = await this.userService.findUser(reqUser.id);
+			const savedPost = this.savedPostRepository.create({
+				user,
+				post,
+			});
+			await this.savedPostRepository.save(savedPost);
+			return;
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async cancelSavePost(reqUser: JwtPayload, postId: number) {
+		this.savedPostRepository.create();
+		try {
+			const savedPosts = await this.savedPostRepository.findBy({
+				user: { id: reqUser.id },
+				post: { id: postId },
+			});
+			const savedPost = savedPosts[0];
+			return await this.savedPostRepository.remove(savedPost);
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async getSavedPost(reqUser: JwtPayload) {
+		try {
+			const savedPosts = await this.savedPostRepository.find({
+				where: { user: { id: reqUser.id } },
+				relations: ['post'],
+			});
+
+			return plainToInstance(FindPopularPostMinRes, savedPosts);
 		} catch (error) {
 			throw error;
 		}

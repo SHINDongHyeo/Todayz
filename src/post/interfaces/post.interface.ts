@@ -1,0 +1,5 @@
+export enum PostType {
+	LATEST = 'LATEST',
+	RECOMMEND = 'RECOMMEND',
+	POPULAR = 'POPULAR',
+}

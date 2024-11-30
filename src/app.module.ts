@@ -8,6 +8,7 @@ import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { DebateModule } from './debate/debate.module';
 import { SearchModule } from './search/search.module';
+import { InquiryModule } from './inquiry/inquiry.module';
 
 @Module({
 	imports: [
@@ -20,6 +21,7 @@ import { SearchModule } from './search/search.module';
 		PostModule,
 		DebateModule,
 		SearchModule,
+		InquiryModule,
 	],
 })
 export class AppModule {}
