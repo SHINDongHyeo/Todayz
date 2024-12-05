@@ -61,20 +61,6 @@ export class PostService {
 				rawTags,
 			} = createPostReq;
 
-			const category = await this.categoryRepository.findOne({
-				where: { id: categoryId },
-			});
-			if (!category) {
-				throw new Error('해당 카테고리가 존재하지 않음');
-			}
-
-			const subcategory = await this.subcategoryRepository.findOne({
-				where: { id: subcategoryId },
-			});
-			if (!subcategory) {
-				throw new Error('해당 서브카테고리가 존재하지 않음');
-			}
-
 			let tags: Tag[] = [];
 			for (const rawTag of rawTags) {
 				if (rawTag.id === -1) {
@@ -90,19 +76,16 @@ export class PostService {
 				}
 			}
 
-			const user = await this.userService.findUser(reqUser.id);
-			if (!user) {
-				throw new Error('해당 작성자가 존재하지 않음');
-			}
+			await this.userService.updatePostCount(reqUser.id, true);
 
 			const post = this.postRepository.create({
 				title,
 				content,
 				excerpt,
-				category,
-				subcategory,
+				categoryId,
+				subcategoryId,
 				tags,
-				user,
+				userId: reqUser.id,
 			});
 			return await this.postRepository.save(post);
 		} catch (error) {
@@ -578,6 +561,9 @@ export class PostService {
 			}
 			const posts = await this.postRepository.find({
 				where: { userId: userId },
+				order: {
+					createdAt: 'DESC',
+				},
 			});
 
 			return posts;

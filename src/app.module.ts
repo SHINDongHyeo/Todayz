@@ -26,6 +26,5 @@ import { DebateChatGateway } from './_common/gateway/debate-chat/debate-chat.gat
 		InquiryModule,
 		ReportModule,
 	],
-	providers: [DebateChatGateway],
 })
 export class AppModule {}

@@ -31,6 +31,9 @@ export class Debate {
 	@Column({ type: 'int', default: 0 })
 	discussantCount: number;
 
+	@Column({ type: 'int', default: 10 })
+	maxDiscussantCount: number;
+
 	@ManyToOne(() => Category, (category) => category.posts)
 	category: Category;
 	@Column()

@@ -6,8 +6,11 @@ import {
 	Patch,
 	Param,
 	Delete,
+	Query,
+	ParseIntPipe,
 } from '@nestjs/common';
 import { DebateService } from './debate.service';
+import { testDTO } from './dto/debate.dto';
 
 @Controller('debate')
 export class DebateController {
