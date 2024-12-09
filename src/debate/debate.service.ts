@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { error } from 'console';
 import { Repository } from 'typeorm';
+import { CreateDebateReq } from './dto/debate.dto';
 import { Debate } from './entities/debate.entity';
 import { TooManyDiscussorException } from './exceptions/TooManyDiscussor.exception';
 
@@ -12,8 +12,26 @@ export class DebateService {
 		private readonly debateRepository: Repository<Debate>,
 	) {}
 
-	async createDebate() {
-		throw new Error('Method not implemented.');
+	async createDebate(createDebateReq: CreateDebateReq) {
+		try {
+			const {
+				title,
+				content,
+				categoryId,
+				subcategoryId,
+				maxDiscussantCount,
+			} = createDebateReq;
+			const insertResponse = await this.debateRepository.insert({
+				title,
+				content,
+				categoryId,
+				subcategoryId,
+				maxDiscussantCount,
+			});
+			return insertResponse.identifiers[0].id;
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	async findDebates() {

@@ -10,15 +10,15 @@ import {
 	ParseIntPipe,
 } from '@nestjs/common';
 import { DebateService } from './debate.service';
-import { testDTO } from './dto/debate.dto';
+import { CreateDebateReq } from './dto/debate.dto';
 
 @Controller('debate')
 export class DebateController {
 	constructor(private readonly debateService: DebateService) {}
 
 	@Post()
-	async createDebate() {
-		return this.debateService.createDebate();
+	async createDebate(@Body() createDebateReq: CreateDebateReq) {
+		return this.debateService.createDebate(createDebateReq);
 	}
 
 	@Get()

@@ -1,3 +1,4 @@
+import { IsNotEmpty, IsString } from 'class-validator';
 import { Category } from 'src/post/entities/category.entity';
 import { Subcategory } from 'src/post/entities/subcategory.entity';
 import { PostReport } from 'src/report/entities/postReport.entity';
