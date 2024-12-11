@@ -1,3 +1,4 @@
+import { Notification } from 'src/notification/entities/notification.entity';
 import { CommentReport } from 'src/report/entities/commentReport.entity';
 import { User } from 'src/user/entities/user.entity';
 import {
@@ -5,9 +6,11 @@ import {
 	CreateDateColumn,
 	DeleteDateColumn,
 	Entity,
+	JoinColumn,
 	ManyToOne,
 	OneToMany,
 	PrimaryGeneratedColumn,
+	RelationId,
 } from 'typeorm';
 import { LikeComment } from './likeComment.entity';
 import { Post } from './post.entity';
@@ -37,13 +40,18 @@ export class Comment {
 		onUpdate: 'CASCADE',
 	})
 	post: Post;
+	@Column()
+	postId: number;
 
 	@ManyToOne(() => User, (user) => user.comments, {
 		nullable: true,
 		onDelete: 'SET NULL', // 사용자가 악의적 댓글 작성 후 탈퇴해 발뺌하는 경우 방지
 		onUpdate: 'CASCADE',
 	})
+	@JoinColumn({ name: 'userId' })
 	user: User;
+	@RelationId((comment: Comment) => comment.user)
+	userId: number;
 
 	@ManyToOne(() => User, (user) => user.mentionedComments, {
 		nullable: true,
@@ -55,6 +63,9 @@ export class Comment {
 	@OneToMany(() => LikeComment, (likeComment) => likeComment.comment)
 	likeComments: LikeComment[];
 
-	@OneToMany(() => CommentReport, (commentReport) => commentReport.user)
+	@OneToMany(() => CommentReport, (commentReport) => commentReport.comment)
 	commentReports: CommentReport[];
+
+	@OneToMany(() => Notification, (notification) => notification.comment)
+	notifications: Notification[];
 }

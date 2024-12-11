@@ -17,6 +17,8 @@ import { PostReport } from 'src/report/entities/postReport.entity';
 import { CommentReport } from 'src/report/entities/commentReport.entity';
 import { SubscribeInfo } from 'src/user/entities/subscribeInfo.entity';
 import { Debate } from 'src/debate/entities/debate.entity';
+import { Notification } from 'src/notification/entities/notification.entity';
+import { InitSeed } from './init-seed';
 
 @Module({
 	imports: [
@@ -48,11 +50,14 @@ import { Debate } from 'src/debate/entities/debate.entity';
 					CommentReport,
 					SubscribeInfo,
 					Debate,
+					Notification,
 				],
 				synchronize:
 					configService.get<string>('NODE_ENV') === 'development',
 			}),
 		}),
 	],
+	providers: [InitSeed],
+	exports: [InitSeed],
 })
 export class DatabaseModule {}

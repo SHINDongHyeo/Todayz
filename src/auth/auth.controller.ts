@@ -14,7 +14,8 @@ export class AuthController {
 	@Post('sign-in')
 	async signIn(@Body() signInReq: SignInReq): Promise<SignInRes> {
 		const { token, provider } = signInReq;
-		return this.authService.signIn(token, provider);
+		const result = this.authService.signIn(token, provider);
+		return result;
 	}
 
 	@Get('nickname/validate')

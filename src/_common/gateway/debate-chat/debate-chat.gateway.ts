@@ -25,6 +25,11 @@ export class DebateChatGateway
 
 	constructor(private readonly debateService: DebateService) {}
 
+	private clientUserMap = new Map<
+		string,
+		{ userId: number; userNickname: string }
+	>();
+
 	afterInit(server: Server) {
 		console.log('WebSocket Gateway Initialized');
 	}
@@ -49,6 +54,8 @@ export class DebateChatGateway
 		try {
 			const { userId, userNickname, roomId } = payload;
 
+			this.clientUserMap.set(client.id, { userId, userNickname });
+
 			const users = Array.from(
 				this.server.sockets.adapter.rooms.get(roomId) || [],
 			);
@@ -58,12 +65,16 @@ export class DebateChatGateway
 				userCount + 1,
 			);
 
+			const usersInfo = users.map((socketId) =>
+				this.clientUserMap.get(socketId),
+			);
+
 			client.join(roomId);
 			this.server.to(roomId).emit('users', {
 				userId,
 				userNickname,
 				type: 'join',
-				joiningUsers: users,
+				joiningUsers: usersInfo,
 			});
 			console.log(`Client connected handleJoin: ${client.id}, ${roomId}`);
 		} catch (error) {

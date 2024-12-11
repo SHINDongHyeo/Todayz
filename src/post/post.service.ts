@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { endWith } from 'rxjs';
 import { JwtPayload } from 'src/auth/interfaces/auth.interface';
+import { NotificationType } from 'src/notification/interfaces/notification.interface';
+import { NotificationService } from 'src/notification/notification.service';
 import { UserService } from 'src/user/user.service';
 import { In, LessThan, Repository } from 'typeorm';
 import { CreateCommentReq } from './dto/comment.dto';
@@ -44,6 +46,7 @@ export class PostService {
 		@InjectRepository(LikePost)
 		private readonly likePostRepository: Repository<LikePost>,
 		private readonly userService: UserService,
+		private readonly notificationService: NotificationService,
 	) {}
 
 	// 포스트
@@ -85,7 +88,8 @@ export class PostService {
 				categoryId,
 				subcategoryId,
 				tags,
-				userId: reqUser.id,
+				// userId: reqUser.id,
+				user: { id: reqUser.id },
 			});
 			return await this.postRepository.save(post);
 		} catch (error) {
@@ -246,7 +250,7 @@ export class PostService {
 
 			const posts = await this.postRepository.find({
 				where: {
-					userId: In(publisherUserIds),
+					user: { id: In(publisherUserIds) },
 				},
 				take: 10,
 				skip: offset,
@@ -379,7 +383,34 @@ export class PostService {
 			);
 
 			await this.userService.updateCommentCount(reqUser.id, true);
-			return await this.commentRepository.save(comment);
+
+			const savedComment = await this.commentRepository.save(comment);
+
+			let notificationType = null;
+			let receiverId = null;
+			if (parentId) {
+				if (mentionUser) {
+					notificationType =
+						NotificationType.MY_COMMENT_REPLY_MENTION;
+					receiverId = mentionUser.id;
+				} else {
+					notificationType = NotificationType.MY_COMMENT_REPLY;
+					receiverId = comment.userId;
+				}
+			} else {
+				notificationType = NotificationType.MY_POST_REPLY;
+				receiverId = post.userId;
+			}
+
+			await this.userService.updateNotification(receiverId, true);
+			await this.notificationService.createNotification(
+				notificationType,
+				receiverId,
+				reqUser.id,
+				post.id,
+				savedComment.id,
+			);
+			return savedComment;
 		} catch (error) {
 			throw error;
 		}
@@ -454,6 +485,15 @@ export class PostService {
 				comment,
 			});
 			await this.likeCommentRepository.save(like);
+
+			await this.userService.updateNotification(comment.userId, true);
+			await this.notificationService.createNotification(
+				NotificationType.MY_COMMENT_LIKE,
+				comment.userId,
+				reqUser.id,
+				comment.postId,
+				comment.id,
+			);
 			return;
 		} catch (error) {
 			throw error;
@@ -475,6 +515,15 @@ export class PostService {
 			});
 			const like = likes[0];
 			await this.likeCommentRepository.remove(like);
+
+			await this.userService.updateNotification(comment.userId, true);
+			await this.notificationService.createNotification(
+				NotificationType.MY_COMMENT_LIKE_CANCLE,
+				comment.userId,
+				reqUser.id,
+				comment.postId,
+				comment.id,
+			);
 			return;
 		} catch (error) {
 			throw error;
@@ -514,6 +563,15 @@ export class PostService {
 				post,
 			});
 			await this.likePostRepository.save(like);
+
+			await this.userService.updateNotification(post.userId, true);
+			await this.notificationService.createNotification(
+				NotificationType.MY_POST_LIKE,
+				post.userId,
+				reqUser.id,
+				post.id,
+				null,
+			);
 			return;
 		} catch (error) {
 			throw error;
@@ -534,6 +592,15 @@ export class PostService {
 				post: { id: postId }, // TODO: 자기참조관계로 변경 시 수정
 			});
 			const like = likes[0];
+
+			await this.userService.updateNotification(post.userId, true);
+			await this.notificationService.createNotification(
+				NotificationType.MY_POST_LIKE_CANCLE,
+				post.userId,
+				reqUser.id,
+				post.id,
+				null,
+			);
 			return await this.likePostRepository.remove(like);
 		} catch (error) {
 			throw error;
@@ -560,7 +627,7 @@ export class PostService {
 				throw new UnauthorizedException('권한이 없습니다');
 			}
 			const posts = await this.postRepository.find({
-				where: { userId: userId },
+				where: { user: { id: userId } },
 				order: {
 					createdAt: 'DESC',
 				},
@@ -629,7 +696,6 @@ export class PostService {
 	}
 
 	async cancelSavePost(reqUser: JwtPayload, postId: number) {
-		this.savedPostRepository.create();
 		try {
 			const savedPosts = await this.savedPostRepository.findBy({
 				user: { id: reqUser.id },

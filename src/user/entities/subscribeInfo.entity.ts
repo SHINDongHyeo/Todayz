@@ -10,11 +10,13 @@ import {
 	Column,
 	CreateDateColumn,
 	Entity,
+	JoinColumn,
 	ManyToMany,
 	ManyToOne,
 	OneToMany,
 	PrimaryColumn,
 	PrimaryGeneratedColumn,
+	RelationId,
 	Unique,
 } from 'typeorm';
 import {
@@ -36,16 +38,18 @@ export class SubscribeInfo {
 		onDelete: 'CASCADE',
 		onUpdate: 'CASCADE',
 	})
+	@JoinColumn({ name: 'subscriberId' })
 	subscriber: User;
-	@Column()
+	@RelationId((subscribeInfo: SubscribeInfo) => subscribeInfo.subscriber)
 	subscriberId: number;
 
 	@ManyToOne(() => User, (user) => user.followers, {
 		onDelete: 'CASCADE',
 		onUpdate: 'CASCADE',
 	})
+	@JoinColumn({ name: 'publisherId' })
 	publisher: User;
-	@Column()
+	@RelationId((subscribeInfo: SubscribeInfo) => subscribeInfo.publisher)
 	publisherId: number;
 
 	@CreateDateColumn()

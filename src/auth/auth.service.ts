@@ -48,7 +48,7 @@ export class AuthService {
 	// JWT 재발급
 	async reissueJwt(refreshToken: string) {
 		try {
-			const decoded = this.refreshTokenJwtService.decode(refreshToken);
+			const decoded = this.refreshTokenJwtService.verify(refreshToken);
 			return this.issueJwt(decoded.id, decoded.email);
 		} catch (error) {
 			throw new UnauthorizedException(
@@ -104,7 +104,7 @@ export class AuthService {
 			} catch (error) {
 				// 데이터베이스에 유저 정보 없으면 회원가입 처리
 				if (error instanceof NotFoundException) {
-					await this.signUp(socialId, provider, email);
+					return await this.signUp(socialId, provider, email);
 				}
 			}
 		} catch (error) {

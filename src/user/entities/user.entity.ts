@@ -21,6 +21,7 @@ import {
 import { PostReport } from 'src/report/entities/postReport.entity';
 import { CommentReport } from 'src/report/entities/commentReport.entity';
 import { SubscribeInfo } from './subscribeInfo.entity';
+import { Notification } from 'src/notification/entities/notification.entity';
 
 @Entity()
 export class User {
@@ -107,4 +108,13 @@ export class User {
 
 	@OneToMany(() => SubscribeInfo, (subscribeInfo) => subscribeInfo.publisher)
 	followers: SubscribeInfo[];
+
+	@OneToMany(() => Notification, (notification) => notification.receiver)
+	receivedNotifications: Notification[];
+
+	@OneToMany(() => Notification, (notification) => notification.sender)
+	sentNotifications: Notification[];
+
+	@Column({ type: 'boolean', default: false })
+	isUnreadNotification: boolean;
 }

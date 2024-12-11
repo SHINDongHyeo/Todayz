@@ -26,7 +26,7 @@ export class Inquiry {
 	@Column({ type: 'text', nullable: true, collation: 'utf8mb4_general_ci' })
 	content: string;
 
-	@Column({ type: 'boolean' })
+	@Column({ type: 'boolean', default: false })
 	isReplied: boolean;
 
 	@Column({ type: 'text', nullable: true, collation: 'utf8mb4_general_ci' })

@@ -34,6 +34,7 @@ export class InquiryService {
 
 	async getMyInquiries(reqUser: JwtPayload) {
 		try {
+			await this.userService.updateNotification(reqUser.id, false);
 			const inquiries = await this.inquiryRepository.find({
 				where: { user: { id: reqUser.id } },
 				take: 10,

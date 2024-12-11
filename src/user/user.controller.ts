@@ -38,6 +38,15 @@ export class UserController {
 	}
 
 	@UseGuards(AuthGuard)
+	@Get('notification/:id/check')
+	async isThereUnreadNotification(
+		@Req() req: any,
+		@Param('id', ParseIntPipe) id: number,
+	) {
+		return await this.userService.isThereUnreadNotification(req.user);
+	}
+
+	@UseGuards(AuthGuard)
 	@Post('subscribe/:id')
 	async subscribe(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
 		return await this.userService.subscribe(req.user, id);

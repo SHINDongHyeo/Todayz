@@ -15,6 +15,7 @@ import { LikePost } from './entities/likePost.entity';
 import { PopularPost } from './entities/popularPost.entity';
 import { SavedPost } from './entities/savedPost.entity';
 import { Inquiry } from '../inquiry/entities/inquiry.entity';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
 	imports: [
@@ -33,6 +34,7 @@ import { Inquiry } from '../inquiry/entities/inquiry.entity';
 		]),
 		AccessTokenJwtModule,
 		UserModule,
+		NotificationModule,
 	],
 	controllers: [PostController],
 	providers: [PostService],

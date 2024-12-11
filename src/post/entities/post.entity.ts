@@ -1,3 +1,4 @@
+import { Notification } from 'src/notification/entities/notification.entity';
 import { PostReport } from 'src/report/entities/postReport.entity';
 import { User } from 'src/user/entities/user.entity';
 import {
@@ -5,12 +6,14 @@ import {
 	CreateDateColumn,
 	Entity,
 	Index,
+	JoinColumn,
 	JoinTable,
 	ManyToMany,
 	ManyToOne,
 	OneToMany,
 	OneToOne,
 	PrimaryGeneratedColumn,
+	RelationId,
 } from 'typeorm';
 import { Category } from './category.entity';
 import { Comment } from './comment.entity';
@@ -47,9 +50,14 @@ export class Post {
 	@Column({ type: 'int', default: 0 })
 	commentCount: number;
 
-	@ManyToOne(() => User, (user) => user.posts, { eager: true })
+	@ManyToOne(() => User, (user) => user.posts, {
+		eager: true,
+		onDelete: 'CASCADE',
+		onUpdate: 'CASCADE',
+	})
+	@JoinColumn({ name: 'userId' })
 	user: User;
-	@Column()
+	@RelationId((post: Post) => post.user)
 	userId: number;
 
 	@ManyToOne(() => Category, (category) => category.posts, { eager: true })
@@ -82,4 +90,7 @@ export class Post {
 
 	@OneToMany(() => PostReport, (postReport) => postReport.post)
 	postReports: PostReport[];
+
+	@OneToMany(() => Notification, (notification) => notification.post)
+	notifications: Notification[];
 }

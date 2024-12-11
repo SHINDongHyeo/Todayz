@@ -29,6 +29,19 @@ export class UserService {
 		private readonly subscribeInfoRepository: Repository<SubscribeInfo>,
 	) {}
 
+	async isThereUnreadNotification(reqUser: JwtPayload) {
+		try {
+			const users = await this.userRepository.findBy({
+				id: reqUser.id,
+			});
+			const user = users[0];
+
+			return user.isUnreadNotification;
+		} catch (error) {
+			throw error;
+		}
+	}
+
 	async createUser(
 		socialId: string,
 		socialProvider: UserSocialProvider,
@@ -110,6 +123,15 @@ export class UserService {
 		}
 	}
 
+	async updateNotification(id: number, isUnreadNotification: boolean) {
+		try {
+			await this.userRepository.update({ id }, { isUnreadNotification });
+			return;
+		} catch (error) {
+			throw error;
+		}
+	}
+
 	async updateCommentCount(id: number, isCreating: boolean) {
 		try {
 			if (isCreating) {
@@ -164,8 +186,8 @@ export class UserService {
 			});
 
 			return await this.subscribeInfoRepository.insert({
-				subscriberId: reqUser.id,
-				publisherId: publisherUserId,
+				subscriber: { id: reqUser.id },
+				publisher: { id: publisherUserId },
 			});
 		} catch (error) {
 			throw error;
@@ -179,8 +201,8 @@ export class UserService {
 			});
 
 			return await this.subscribeInfoRepository.delete({
-				subscriberId: reqUser.id,
-				publisherId: publisherUserId,
+				subscriber: { id: reqUser.id },
+				publisher: { id: publisherUserId },
 			});
 		} catch (error) {
 			throw error;
@@ -206,14 +228,8 @@ export class UserService {
 	async findFollowings(followerId: number) {
 		try {
 			const subscribeInfos = await this.subscribeInfoRepository.find({
-				select: [
-					'id',
-					'createdAt',
-					'notificationEnabled',
-					'publisherId',
-				],
 				where: {
-					subscriberId: followerId,
+					subscriber: { id: followerId },
 				},
 			});
 
@@ -233,7 +249,7 @@ export class UserService {
 
 			const subscribeInfos = await this.subscribeInfoRepository.find({
 				where: {
-					subscriberId: followerId,
+					subscriber: { id: followerId },
 				},
 				relations: ['publisher'],
 			});
